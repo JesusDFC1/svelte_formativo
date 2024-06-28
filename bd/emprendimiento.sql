@@ -5,12 +5,11 @@ USE emprendimiento;
 
 -- Creamos las tablas 
 CREATE TABLE Tipo_Usuario (
-    nombre VARCHAR(45),
-    Usuario ENUM,
+    Usuario ENUM('Admin','estandar')DEFAULT 'estandar',
     idTipo_Usuario INT PRIMARY KEY
 );
 
-;
+
 
 CREATE TABLE Administrador (
     codigo_Administrador INT PRIMARY KEY,
@@ -18,12 +17,13 @@ CREATE TABLE Administrador (
     apellidos VARCHAR(45),
     telefono VARCHAR(45),
     email VARCHAR(45),
+    clave VARCHAR(60),
     Tipo_Usuario_idTipo_Usuario INT,
     FOREIGN KEY (Tipo_Usuario_idTipo_Usuario) REFERENCES Tipo_Usuario(idTipo_Usuario)
 );
 
 CREATE TABLE clientes (
-    idclientes INT PRIMARY KEY,
+    idclientes INT AUTO_INCREMENT PRIMARY KEY,
     nombres VARCHAR(45),
     apellidos VARCHAR(45),
     telefono VARCHAR(45),
@@ -39,8 +39,7 @@ CREATE TABLE producto (
     nombre_producto VARCHAR(100),
     precio DECIMAL(10,2),
     descripcion TEXT(100)
-    imagen BLOB
-    
+    imagen BLOB,
 );
 
 ALTER TABLE producto
@@ -53,7 +52,7 @@ CHECK (
 
 
 CREATE TABLE Reporte (
-    id_Reporte INT PRIMARY KEY,
+    id_Reporte INT AUTO_INCREMENT PRIMARY KEY,
     descripcion TEXT(150),
     fecha_reporte DATE,
     clientes_idclientes INT,

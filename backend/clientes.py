@@ -2,7 +2,6 @@ from flask import Flask, Blueprint, jsonify, request
 from flask_cors import CORS
 import pymysql
 from flask_bcrypt import Bcrypt
-
 app = Flask(__name__)
 CORS(app)
 bcrypt = Bcrypt(app)
@@ -39,9 +38,8 @@ def registro_cliente():
         clave_hash = bcrypt.generate_password_hash(clave).decode('utf-8')
         # Usa parámetros para evitar inyección SQL y errores de índice
         sql = """
-            INSERT INTO clientes (idclientes,nombres, apellidos, telefono, correo, clave) 
-            VALUES (%s, %s, %s, %s, %s,%s)
-        """
+            INSERT INTO clientes (nombres, apellidos, telefono, correo, clave) 
+            VALUES (%s, %s, %s, %s, %s,%s)"""
         valores = (request.json['idclientes'],request.json['nombres'], request.json['apellidos'], request.json['telefono'], request.json['correo'], clave_hash)
         cur.execute(sql, valores)
         conn.commit()
@@ -75,7 +73,7 @@ def eliminar(codigo):
     try:
         conn = conectar('localhost', 'root', '', 'emprendimiento')
         cur = conn.cursor()
-        cur.execute(""" DELETE FROM clientes WHERE idcliente = %s """, (codigo,))
+        cur.execute(""" DELETE FROM clientes WHERE idcliente = %s """, (codigo))
         conn.commit()
         cur.close()
         conn.close()
@@ -83,15 +81,17 @@ def eliminar(codigo):
     except Exception as ex:
         print(ex)
         return jsonify({'mensaje': 'Error'})
-
-@cliente_blueprint.route("/login", methods=['POST'])
+    
+    
+##rutas para el login 
+@cliente_blueprint.route("/login_estandar", methods=['POST'])
 def login():
     try:
         conn = conectar('localhost', 'root', '', 'emprendimiento')
         cur = conn.cursor()
         correo = request.json['correo']
         clave = request.json['clave']
-        cur.execute(""" SELECT * FROM clientes WHERE correo = %s """, (correo,))
+        cur.execute(""" SELECT * FROM clientes WHERE correo = %s """, (correo))
         datos = cur.fetchone()
         cur.close()
         conn.close()
