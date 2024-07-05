@@ -34,11 +34,11 @@ CREATE TABLE clientes (
 ); 
 
 CREATE TABLE producto (
-    id_productos INT PRIMARY KEY,
-    codigo_productos VARCHAR(45),
+    id_productos INT AUTO_INCREMENT PRIMARY KEY,
     nombre_producto VARCHAR(100),
-    precio DECIMAL(10,2),
-    descripcion TEXT(100)
+    categoria ENUM('moda','hogar','belleza','tecnologia'),
+    precio DECIMAL(1.000),
+    descripcion TEXT(250)
     imagen BLOB,
 );
 
