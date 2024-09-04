@@ -28,7 +28,7 @@ CREATE TABLE clientes (
     apellidos VARCHAR(45),
     telefono VARCHAR(45),
     correo VARCHAR(50),
-    clave VARCHAR(10),
+    clave VARCHAR(60),
     Tipo_Usuario_idTipo_Usuario INT,
     FOREIGN KEY (Tipo_Usuario_idTipo_Usuario) REFERENCES Tipo_Usuario(idTipo_Usuario)
 ); 

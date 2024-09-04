@@ -21,7 +21,7 @@ def consulta_general():
         datos = cur.fetchall()
         data = []
         for row in datos:
-            dato = {'idcliente': row[0], 'nombres': row[1], 'apellidos': row[2], 'telefono': row[3], 'correo': row[4], 'clave': row[5]}
+            dato = {'idclientes': row[0], 'nombres': row[1], 'apellidos': row[2], 'telefono': row[3], 'correo': row[4], 'clave': row[5]}
             data.append(dato)
         cur.close()
         conn.close()
@@ -29,51 +29,76 @@ def consulta_general():
     except Exception as ex:
         return jsonify({'mensaje': 'Error'})
 
+#registrar
 @cliente_blueprint.route("/registro_cliente/", methods=['POST'])
 def registro_cliente():
     try:
         conn = conectar('localhost', 'root', '', 'emprendimiento')
-        cur = conn.cursor()
-        clave = request.json['clave']
-        clave_hash = bcrypt.generate_password_hash(clave).decode('utf-8')
-        # Usa parámetros para evitar inyección SQL y errores de índice
-        sql = """
-            INSERT INTO clientes (nombres, apellidos, telefono, correo, clave) 
-            VALUES (%s, %s, %s, %s, %s,%s)"""
-        valores = (request.json['idclientes'],request.json['nombres'], request.json['apellidos'], request.json['telefono'], request.json['correo'], clave_hash)
-        cur.execute(sql, valores)
-        conn.commit()
-        cur.close()
-        conn.close()
+        with conn.cursor() as cur:
+            clave = request.json['clave']
+            clave_hash = bcrypt.generate_password_hash(clave).decode('utf-8')
+            
+           
+            sql = """
+                INSERT INTO clientes (nombres, apellidos, telefono, correo, clave) 
+                VALUES (%s, %s, %s, %s, %s)"""
+            valores = (request.json['nombres'], request.json['apellidos'], request.json['telefono'], request.json['correo'], clave_hash)
+            
+            cur.execute(sql, valores)
+            conn.commit()
+        
         return jsonify({'mensaje': 'Registro agregado'})
+    
     except Exception as ex:
-        print(ex)
-        return jsonify({'mensaje': 'Error'})
+        print(f"Error: {ex}")
+        return jsonify({'mensaje': f"Error: {str(ex)}"}), 500
+    
+    finally:
+        if conn:
+            conn.close()
 
 @cliente_blueprint.route("/consulta_individual_clientes/<codigo>", methods=['GET'])
 def consulta_individual(codigo):
     try:
         conn = conectar('localhost', 'root', '', 'emprendimiento')
-        cur = conn.cursor()
-        cur.execute(""" SELECT * FROM clientes WHERE idcliente = %s """, (codigo,))
-        datos = cur.fetchone()
-        cur.close()
-        conn.close()
+        with conn.cursor() as cur:
+           
+            cur.execute(""" SELECT * FROM clientes WHERE idclientes = %s """, (codigo,))
+            datos = cur.fetchone()
+        
         if datos:
-            dato = {'idcliente': datos[0], 'nombres': datos[1], 'apellidos': datos[2], 'telefono': datos[3], 'correo': datos[4], 'clave': datos[5]}
+            dato = {
+                'idcliente': datos[0], 
+                'nombres': datos[1], 
+                'apellidos': datos[2], 
+                'telefono': datos[3], 
+                'correo': datos[4], 
+                'clave': datos[5]
+            }
             return jsonify({'cliente': dato, 'mensaje': 'Registro encontrado'})
         else:
             return jsonify({'mensaje': 'Registro no encontrado'})
+    
+    except ValueError:
+     
+        return jsonify({'mensaje': 'Error: Código inválido, debe ser un número entero'}), 400
+    
     except Exception as ex:
-        print(ex)
-        return jsonify({'mensaje': 'Error'})
+       
+        print(f"Error: {ex}")
+        return jsonify({'mensaje': f"Error: {str(ex)}"}), 500
+    
+    finally:
+        if conn:
+            conn.close()
+
 
 @cliente_blueprint.route("/eliminar_clientes/<codigo>", methods=['DELETE'])
 def eliminar(codigo):
     try:
         conn = conectar('localhost', 'root', '', 'emprendimiento')
         cur = conn.cursor()
-        cur.execute(""" DELETE FROM clientes WHERE idcliente = %s """, (codigo))
+        cur.execute(""" DELETE FROM clientes WHERE idclientes = %s """, (codigo))
         conn.commit()
         cur.close()
         conn.close()

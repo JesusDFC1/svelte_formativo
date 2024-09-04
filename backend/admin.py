@@ -12,26 +12,43 @@ admin_blueprint = Blueprint('admin', __name__)
 
 def conectar(vhost,vuser,vpass,vdb):
      conn = pymysql.connect(host=vhost, user=vuser, passwd=vpass, db=vdb, charset = 'utf8mb4')
-     return conn 
-#TABLA ADMINISTRADOR
+     return conn
 @admin_blueprint.route("/admin")
 def consulta_general():
-     try:
-         conn=conectar('localhost','root','','emprendimiento')
-         cur = conn.cursor()
-         cur.execute(""" SELECT * FROM Administrador """)
-         #Extre todos los registros que se encuentran en el cursor cur
-         
-         datos=cur.fetchall()
-         data=[]
-         for row in datos:
-             dato={'codigo_Administrador':row[0],'nombre':row[1],'apellidos':row[2],'telefono':row[3],'email':row[4],'clave':row[5]}
-             data.append(dato)
-         cur.close()
-         conn.close()
-         return jsonify({'Administrador':data,'mensaje':'Registros encontrados'})
-     except Exception as ex:
-         return jsonify({'mensaje':'Error'})
+    try:
+        conn = conectar('localhost', 'root', '', 'emprendimiento')
+        cur = conn.cursor()
+
+   
+        cur.execute("""
+            SELECT a.codigo_Administrador, a.nombre, a.apellidos, a.telefono, 
+                   a.email, a.clave, t.Usuario
+            FROM Administrador a
+            INNER JOIN Tipo_Usuario t ON a.Tipo_Usuario_idTipo_Usuario = t.idTipo_Usuario;
+        """)
+
+        datos = cur.fetchall()
+        data = []
+        for row in datos:
+            dato = {
+                'codigo_Administrador': row[0],
+                'nombre': row[1],
+                'apellidos': row[2],
+                'telefono': row[3],
+                'email': row[4],
+                'clave': row[5],
+                'usuario': row[6]  
+            }
+            data.append(dato)
+
+        cur.close()
+        conn.close()
+        return jsonify({'Administrador': data, 'mensaje': 'Registros encontrados'})
+
+    except Exception as ex:
+        print(f"Error: {ex}")
+        return jsonify({'mensaje': 'Error: ' + str(ex)}), 500
+
 
 
 @admin_blueprint.route("/registro_Administrador/",methods=['POST'])
@@ -41,9 +58,9 @@ def registro_administrador():
         cur = conn.cursor()
         clave = request.json['clave']
         clave_hash = bcrypt.generate_password_hash(clave).decode('utf-8')
-        sql = """ insert into Administrador (codigo_Administrador,nombres,apellidos,telefono,email, clave)
+        sql = """ insert into Administrador (codigo_Administrador,nombre,apellidos,telefono,email, clave)
         VALUES (%s, %s, %s, %s, %s,%s) """
-        valores = (request.json['codigo_Administrador'],request.json['nombres'],request.json['apellidos'],request.json['telefono'],request.json['email'], clave_hash)
+        valores = (request.json['codigo_Administrador'],request.json['nombre'],request.json['apellidos'],request.json['telefono'],request.json['email'], clave_hash)
         cur.execute(sql, valores)
         conn.commit()
         cur.close()
@@ -52,25 +69,43 @@ def registro_administrador():
     except Exception as ex:
         print(ex)
         return jsonify({'mensaje':'Error'})
-    
-@admin_blueprint.route("/consulta_individual_Administrador/<codigo>",methods=['GET'])
+@admin_blueprint.route("/consulta_individual_Administrador/<codigo>", methods=['GET'])
 def consulta_individual(codigo):
     try:
-        conn=conectar('localhost','root','','emprendimiento')
+        conn = conectar('localhost', 'root', '', 'emprendimiento')
         cur = conn.cursor()
-        cur.execute(""" SELECT * FROM Administrador where codigo_Administrador='{0}' """.format(codigo))
-        datos=cur.fetchone()
+        
+        # Ejecutar la consulta con INNER JOIN
+        cur.execute("""
+            SELECT a.codigo_Administrador, a.nombre, a.apellidos, a.telefono, 
+                   a.email, a.clave, t.Usuario
+            FROM Administrador a
+            INNER JOIN Tipo_Usuario t ON a.Tipo_Usuario_idTipo_Usuario = t.idTipo_Usuario
+            WHERE a.codigo_Administrador = %s;
+        """, (codigo,))
+        
+        datos = cur.fetchone()
         cur.close()
         conn.close()
-        if datos!=None:
-            dato={'codigo_Administrador':datos[0],'nombre':datos[1],'apellidos':datos[2],'telefono':datos[3],'email':datos[3],'clave':datos[4]}
-            return jsonify({'Administrador':dato,'mensaje':'Registro encontrado'})  
+
+        if datos is not None:
+            dato = {
+                'codigo_Administrador': datos[0],
+                'nombre': datos[1],
+                'apellidos': datos[2],
+                'telefono': datos[3],
+                'email': datos[4],
+                'clave': datos[5],
+                'usuario': datos[6]  # Campo 'Usuario' de la tabla 'Tipo_Usuario'
+            }
+            return jsonify({'Administrador': dato, 'mensaje': 'Registro encontrado'})  
         else:
-            return jsonify({'mensaje':'Registro no encontrado'})     
+            return jsonify({'mensaje': 'Registro no encontrado'})     
     except Exception as ex:
         print(ex)
-        return jsonify({'mensaje':'Error'})
-    
+        return jsonify({'mensaje': 'Error'})
+
+
 @admin_blueprint.route("/eliminar_Administrador/<codigo>",methods=['DELETE'])
 def eliminar(codigo):
     
